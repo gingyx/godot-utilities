@@ -19,16 +19,14 @@ enum LabelType {
 @export var label_type: LabelType
 ## Position offset for the label that displays [member value]
 @export var label_offset: Vector2
-## Optional external label to replace default child label
-@export var external_label: NodePath: set = set_external_label
+## Label that displays values
+@export var value_label: Label
 
 # cache value, array size of gradient
 var gradient_size: int
 
 ## Foreground bar style
 @onready var Fg: StyleBoxFlat
-## Label that displays values
-@onready var ValLabel: Label
 
 
 # @PRIVATE
@@ -38,28 +36,29 @@ func _ready() -> void:
 		Fg = get("theme_override_styles/fg")
 		assert(Fg is StyleBoxFlat)
 		gradient_size = gradient.size()
-	if ValLabel == null && label_type != LabelType.NONE:
+	if value_label == null && label_type != LabelType.NONE:
 		_setup_internal_label()
 	_on_value_changed(value)
 	if gradient || label_type != LabelType.NONE:
-		SigBuilder.new(value_changed, _on_value_changed).build()
+		if not value_changed.is_connected(_on_value_changed):
+			value_changed.connect(_on_value_changed)
 
 
 # @PRIVATE
 func _setup_internal_label() -> void:
 	
-	ValLabel = Label.new()
-	ValLabel.name = "ValLabel"
-	ValLabel.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	ValLabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	ValLabel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	ValLabel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	ValLabel.set("theme_override_fonts/font", get("theme_override_fonts/font"))
-	ValLabel.set("theme_override_colors/font_color", get("theme_override_colors/font_color"))
-	add_child(ValLabel)
-	move_child(ValLabel, 0)
-	ValLabel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	ValLabel.position += label_offset
+	value_label = Label.new()
+	value_label.name = "value_label"
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	value_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	value_label.grow_vertical = Control.GROW_DIRECTION_BOTH
+	value_label.set("theme_override_fonts/font", get("theme_override_fonts/font"))
+	value_label.set("theme_override_colors/font_color", get("theme_override_colors/font_color"))
+	add_child(value_label)
+	move_child(value_label, 0)
+	value_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	value_label.position += label_offset
 
 
 # @PRIVATE
@@ -71,8 +70,17 @@ func _on_value_changed(_value: float) -> void:
 			Fg.bg_color = gradient[0]
 		else:
 			Fg.bg_color = gradient[i - 1]
-	if ValLabel != null:
+	if value_label != null:
 		update_label()
+
+
+## Copies [member GameStat.value], [member GameStat.min_value] and
+## 	[member GameStat.max_value] from [param game_stat]
+func copy_game_stat(game_stat: GameStat) -> void:
+	
+	min_value = game_stat.min_value
+	max_value = game_stat.max_value
+	value = game_stat.val
 
 
 ## Returns the ratio [code]val / max_value[/code]
@@ -95,21 +103,6 @@ func is_full() -> bool:
 	return value >= max_value
 
 
-## Sets external label to be used instead of default child label
-func set_external_label(ext_label) -> void:
-	
-	assert(label_type != LabelType.NONE)
-	await self.ready
-	assert(ext_label is Label || typeof(ext_label) == TYPE_NODE_PATH)
-	var _ext_label: Label = (ext_label if ext_label is Label
-		else get_node(ext_label))
-	assert(is_instance_valid(_ext_label))
-	assert(_ext_label.is_inside_tree())
-	if ValLabel != null:
-		ValLabel.queue_free()
-	ValLabel = _ext_label
-
-
 ## Sets [member max_val]
 func set_max_value(max_val: float) -> void:
 	
@@ -123,21 +116,21 @@ func set_max_value(max_val: float) -> void:
 func toggle_label(text_visible: bool) -> void:
 	
 	self.show_value = text_visible
-	if ValLabel != null:
+	if value_label != null:
 		update_label()
 
 
 # @PRIVATE
 func update_label() -> void:
 	
-	if max_value <= 0:
+	if max_value <= 0 || show_percentage:
 		return
 	match label_type:
 		LabelType.FRACTION:
-			ValLabel.text = "{} / {}".format([value, max_value], "{}")
+			value_label.text = "{} / {}".format([value, max_value], "{}")
 		LabelType.PERCENTAGE:
-			ValLabel.text = "{} %".format([int(ratio * 100)], "{}")
+			value_label.text = "{} %".format([int(ratio * 100)], "{}")
 		LabelType.RATIO:
-			ValLabel.text = "{}".format([int(ratio * 100)], "{}")
+			value_label.text = "{}".format([int(ratio * 100)], "{}")
 		LabelType.VALUE:
-			ValLabel.text = str(value)
+			value_label.text = str(value)

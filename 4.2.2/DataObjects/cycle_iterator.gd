@@ -5,7 +5,7 @@ class_name CycleIter
 ## Emitted every time [method next] or [method prev] is called
 signal counter_updated(new_counter: int)
 ## Emitted every time a cycle completes, when all values have been iterated
-signal cycle_completed()
+signal looped()
 
 
 var counter: int = -1
@@ -26,9 +26,14 @@ func increment() -> bool:
 	counter += 1
 	if counter >= limit:
 		counter = 0
-		cycle_completed.emit()
+		looped.emit()
 		return true
 	return false
+
+
+## Returns whether the cycle will loop after iterating the next value
+func is_looping_next() -> bool:
+	return counter == limit - 1
 
 
 ## Returns an ArrCycleIter object which acts similar to CycleIter,
@@ -43,7 +48,7 @@ func next() -> int:
 	counter += 1
 	if counter >= limit:
 		counter = 0
-		cycle_completed.emit()
+		looped.emit()
 	counter_updated.emit(counter)
 	return counter
 

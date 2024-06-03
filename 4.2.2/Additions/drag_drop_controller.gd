@@ -1,14 +1,14 @@
 ## Controller class that moves nodes around in drag-n-drop fashion
 @icon("../Icons/DragDropController.svg")
 class_name DragDropController
-extends Node2D
+extends Node
 
 
 ## Emitted when started dragging [param item]
-signal dragged(item: CanvasItem)
+signal dragged(item: Control)
 ## Emitted when stopped dragging [param item],
 ## 	dropping it at global position [param posg]
-signal dropped_at(item: CanvasItem, posg: Vector2)
+signal dropped_at(item: Control, posg: Vector2)
 
 ## Whether to enable dragging from the start
 @export var auto_run: bool = true
@@ -20,7 +20,7 @@ signal dropped_at(item: CanvasItem, posg: Vector2)
 var current_draggable: Draggable
 var current_drag_offset: Vector2
 var current_mouse_button: MouseButton
-var current_item: CanvasItem
+var current_item: Control
 var draggables: Array[Draggable]
 
 
@@ -36,20 +36,30 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	
 	current_item.global_position = (
-		get_global_mouse_position() + current_drag_offset)
+		current_item.get_global_mouse_position() + current_drag_offset)
 
 
 # @PRIVATE
 func _input(event: InputEvent) -> void:
 	
 	if event is InputEventMouseButton:
+		if event.button_index == current_mouse_button:
+			if not event.is_pressed():
+				set_current_draggable(null)
+
+
+# @PRIVATE
+func _on_Draggable_gui_input(event: InputEvent, draggable: Draggable) -> void:
+	
+	if not is_running():
+		return
+	if event is InputEventMouseButton:
+		assert(is_instance_valid(draggable))
+		if draggable == current_draggable:
+			return
 		if event.is_pressed():
-			for dr in draggables:
-				if dr.input_rect.has_point(get_global_mouse_position()):
-					current_mouse_button = event.button_index
-					set_current_draggable(dr)
-		else:
-			set_current_draggable(null)
+			current_mouse_button = event.button_index
+			set_current_draggable(draggable)
 
 
 ## Simulates a mouse release event and stops dragging
@@ -62,25 +72,30 @@ func is_dragging() -> bool:
 	return current_draggable != null
 
 
+## Returns whether dragging is enabled
+func is_running() -> bool:
+	return is_processing_input()
+
+
 ## Adds [param item] as a draggable item,
 ## 	or updates existing item with new position and z_index
-func make_draggable(item: CanvasItem) -> void:
+func make_draggable(item: Control) -> void:
 	
 	assert(is_instance_valid(item))
-	for i:int in range(draggables.size()):
-		if draggables[i].item == item:
-			# update existing draggable
-			draggables[i] = Draggable.new(item)
-			return
-	draggables.append(Draggable.new(item))
+	## if item exists, erase it
+	make_undraggable(item)
+	var new_draggable = Draggable.new(item)
+	draggables.append(new_draggable)
+	item.gui_input.connect(_on_Draggable_gui_input.bind(new_draggable))
 
 
 ## Removes [param item] from draggable items
-func make_undraggable(item: CanvasItem) -> void:
+func make_undraggable(item: Control) -> void:
 	
 	assert(is_instance_valid(item))
 	for dr in draggables:
 		if dr.item == item:
+			item.gui_input.disconnect(_on_Draggable_gui_input)
 			draggables.erase(dr)
 			break
 
@@ -91,17 +106,17 @@ func set_current_draggable(new_draggable: Draggable) -> void:
 	if new_draggable == current_draggable:
 		return
 	set_process(new_draggable != null)
-	if current_draggable != null:
-		current_draggable.reset()
 	var old_draggable: Draggable = current_draggable
 	current_draggable = new_draggable
+	if old_draggable != null:
+		old_draggable.reset()
 	
 	if new_draggable != null:
 		new_draggable.item.z_index = drag_z_index
 		dragged.emit(new_draggable.item)
 	else:
 		dropped_at.emit(old_draggable.item,
-			get_global_mouse_position())
+			old_draggable.item.get_global_mouse_position())
 		current_mouse_button = MOUSE_BUTTON_NONE
 	if new_draggable != null:
 		current_item = new_draggable.item
@@ -122,11 +137,11 @@ func toggle_running(running: bool) -> void:
 class Draggable:
 	
 	var input_rect: Rect2
-	var item: CanvasItem
+	var item: Control
 	var start_posg: Vector2
 	var z_index: int
 	
-	func _init(_item: CanvasItem) -> void:
+	func _init(_item: Control) -> void:
 		self.item = _item
 		start_posg = item.global_position
 		input_rect = item.get_global_rect()

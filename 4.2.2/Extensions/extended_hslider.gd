@@ -41,7 +41,8 @@ func _ready() -> void:
 		_setup_internal_label()
 	_on_value_changed(value)
 	if gradient || label_type != LabelType.NONE:
-		SigBuilder.new(value_changed).set_connect(_on_value_changed)
+		if not value_changed.is_connected(_on_value_changed):
+			value_changed.connect(_on_value_changed)
 
 
 # @PRIVATE

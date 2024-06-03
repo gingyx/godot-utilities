@@ -3,14 +3,16 @@
 class_name ArrCycleIter
 
 
+## Emitted every time [method next] or [method prev] is called
+signal counter_updated(new_counter: int)
 ## Emitted every time a cycle completes, when all values have been iterated
-signal cycle_completed()
+signal looped()
 
 ## Whether this iterator iterates the array in randomized order
 var shuffles: bool = true
 
 var arr: Variant
-var counter: int
+var counter: int = -1
 
 var _arr_ids: Array
 
@@ -46,6 +48,11 @@ func get_original_array() -> Variant:
 	return arr
 
 
+## Returns whether the cycle will loop after iterating the next value
+func is_looping_next() -> bool:
+	return counter == size() - 1
+
+
 ## Returns the next iterated value
 func next() -> Variant:
 	
@@ -54,7 +61,8 @@ func next() -> Variant:
 		counter = 0
 		if shuffles:
 			_arr_ids.shuffle()
-		cycle_completed.emit()
+		looped.emit()
+	counter_updated.emit(counter)
 	return arr[_arr_ids[counter]]
 
 
@@ -63,6 +71,7 @@ func prev() -> Variant:
 	
 	if counter > 1:
 		counter -= 1
+	counter_updated.emit(counter)
 	return arr[_arr_ids[max(0, counter - 1)]]
 
 

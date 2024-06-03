@@ -85,7 +85,7 @@ func get_scroll_speed() -> float:
 
 
 ## Starts the credit animation
-func start() -> void:
+func play() -> void:
 	
 	var scroll_speed: float = get_scroll_speed()
 	
@@ -133,6 +133,6 @@ func stop() -> void:
 func toggle_running(is_running: bool) -> void:
 	
 	if is_running:
-		start()
+		play()
 	else:
 		stop()

@@ -91,6 +91,19 @@ static func pivot_rand_vect(diff: Vector2, pivot:Vector2=Vector2.ZERO) -> Vector
 	return pivot - diff + random_vect(2*diff)
 
 
+## Plays a random sample of [param player]'s stream of [param sample_sec]
+static func play_audio_sample(player: Node, sample_sec: float) -> void:
+	
+	assert(U.is_valid_audio_player(player))
+	var stream: AudioStream = player.stream
+	assert(is_instance_valid(stream))
+	assert(stream.get_length() > sample_sec)
+	player.play(randomf(stream.get_length() - sample_sec))
+	var delay = Delay.new(player, sample_sec)
+	delay.callback(player.stop)
+	player.finished.connect(delay.queue_free)
+
+
 ## Returns a random integer between [0, n]
 static func random(n: int) -> int:
 	return randi() % (n + 1)

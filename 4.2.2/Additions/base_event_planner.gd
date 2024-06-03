@@ -1,6 +1,6 @@
 ## Controller class for game events; time-based or triggered by the player.
 ## 	All events should inherit [GameEvent]
-@icon("../Icons/HubClass.svg")
+@icon("../Icons/GenericHub.svg")
 extends Node
 class_name BaseEventPlanner
 

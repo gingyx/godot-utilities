@@ -1,6 +1,6 @@
 ## Node for maintaining tweens and their proper teardown.
 ## 	Replaces Godot 3.x Tween
-@icon("../Icons/Tween.svg")
+@icon("../Icons/TweenNode.svg")
 extends Node
 class_name TweenNode
 

@@ -18,7 +18,7 @@ enum Status {
 	COMPLETED
 }
 
-# @type {String = N}
+# @type {String = TreeNode}
 var _nodes_by_name: Dictionary = {}
 
 
@@ -26,9 +26,9 @@ var _nodes_by_name: Dictionary = {}
 ## 	If nodes in [param unlocks] do not exist, they are created.
 ## If [param require_all], node only unlocks after all preceding nodes are completed
 func add_node(node_name: String, unlocks:Array[String]=[],
-		require_all:bool=false) -> void:
+		require_all:bool=false, complete_on_unlock:bool=false) -> void:
 	
-	var unlocks_nodes: Array[N] = []
+	var unlocks_nodes: Array[TreeNode] = []
 	for _name:String in unlocks:
 		if not _name in _nodes_by_name:
 			add_node(_name)
@@ -36,17 +36,35 @@ func add_node(node_name: String, unlocks:Array[String]=[],
 	if node_name in _nodes_by_name:
 		_nodes_by_name[node_name].next = unlocks_nodes
 	else:
-		_nodes_by_name[node_name] = N.new(unlocks_nodes)
+		_nodes_by_name[node_name] = TreeNode.new(unlocks_nodes)
 	_nodes_by_name[node_name].require_all = require_all
+	_nodes_by_name[node_name].complete_on_unlock = complete_on_unlock
+
+
+## Returns whether any node has been defined with [param node_name]
+func has_node(node_name: String) -> bool:
+	return node_name in _nodes_by_name
+
+
+## Returns whether node with [param node_name] can be set to [param status]
+func node_allows_status(node_name: String, status: Status) -> bool:
+	
+	var node: TreeNode = _nodes_by_name[node_name]
+	if status == Status.COMPLETED:
+		if node.require_all:
+			for name:String in node_get_preceding(node_name):
+				if _nodes_by_name[name].status != Status.COMPLETED:
+					return false
+	return true
 
 
 ## Returns all nodes that unlock [param node] on completion
 func node_get_preceding(node_name: String) -> Array:
 	
-	var node: N = _nodes_by_name[node_name]
+	var node: TreeNode = _nodes_by_name[node_name]
 	var prereq: Array[String] = []
 	for name:String in _nodes_by_name:
-		if node in (_nodes_by_name[name] as N).next:
+		if node in (_nodes_by_name[name] as TreeNode).next:
 			prereq.append(name)
 	return UArr.to_set(prereq)
 
@@ -61,37 +79,44 @@ func node_is_completed(node_name: String) -> bool:
 	return node_get_status(node_name) == Status.COMPLETED
 
 
-## Sets status of node with [param node_name] to [param status]
-func node_set_status(node_name: String, status: Status) -> void:
+## Returns whether node with [param node_name] is unlocked (or completed)
+func node_is_unlocked(node_name: String) -> bool:
 	
-	var node: N = _nodes_by_name[node_name]
+	return (node_get_status(node_name) == Status.UNLOCKED
+		|| node_get_status(node_name) == Status.COMPLETED)
+
+
+## Sets status of node with [param node_name] to [param status].
+## Returns false if node with [param node_name] already has status [param status]
+func node_set_status(node_name: String, status: Status) -> bool:
+	
+	var node: TreeNode = _nodes_by_name[node_name]
 	if node.status == status:
-		return
+		return false
+	if not node_allows_status(node_name, status):
+		return false
+	
 	node.status = status
 	if status == Status.COMPLETED:
-		for no:N in node.next:
-			var check = true
-			if no.require_all:
-				for name:String in node_get_preceding(node_name):
-					if _nodes_by_name[name].status != Status.COMPLETED:
-						check = false
-						break
-			if not check:
-				continue
-			no.status = Status.UNLOCKED
-			node_unlocked.emit(_nodes_by_name.find_key(no))
 		node_completed.emit(node_name)
+		for no:TreeNode in node.next:
+			node_set_status(_nodes_by_name.find_key(no),
+				Status.COMPLETED if no.complete_on_unlock else Status.UNLOCKED)
+	elif status == Status.UNLOCKED:
+		node_unlocked.emit(node_name)
 	if status != Status.LOCKED_AND_HIDDEN:
 		node_visible_status_changed.emit()
 	node_status_changed.emit()
+	return true
 
 
 ## Tree node class
-class N:
+class TreeNode:
 	
-	var next: Array[N]
+	var complete_on_unlock: bool = false # useful for quests with subquests
+	var next: Array[TreeNode]
 	var require_all: bool
 	var status: Status
 	
-	func _init(_next:Array[N]=[]) -> void:
+	func _init(_next:Array[TreeNode]=[]) -> void:
 		self.next = _next

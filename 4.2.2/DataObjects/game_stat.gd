@@ -13,6 +13,8 @@ signal deposit_failed()
 signal withdraw_failed()
 ## Emitted when the stat's value changed
 signal value_changed(old_val: float, new_val: float)
+## Emitted when the stat's value changed
+signal value_changed_to(new_val: float)
 
 ## Minimum stat value, clamped
 @export var min_value: float = -INF
@@ -107,7 +109,9 @@ func make_full() -> GameStat:
 
 ## Emits [signal value_changed] for correct initialization of e.g. UI
 func refresh() -> void:
+	
 	value_changed.emit(val, val)
+	value_changed_to.emit(val)
 
 
 func set_val(new_value: float) -> void:
@@ -115,6 +119,7 @@ func set_val(new_value: float) -> void:
 	var old_value: float = val
 	val = clamp(new_value, min_value, max_value)
 	value_changed.emit(old_value, val)
+	value_changed_to.emit(val)
 
 
 ## Sets the minimum and maximum values

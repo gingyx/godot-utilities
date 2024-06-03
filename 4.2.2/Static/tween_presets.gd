@@ -3,7 +3,9 @@ class_name TweenPresets
 
 
 ## Tweens afterimage appearing from [param obj].
-## 	It expands and fades out the image
+## 	It expands and fades out the image.
+## NOTE: if infinitely looped, make sure to properly dispose the tweened sprite
+## 	that you can retrieve with TweenerGroup.get_object
 static func afterimage(tween: Tween, obj: CanvasItem, time_sec: float,
 		scale_ratio:Vector2=1.1*Vector2.ONE, fade_delay:float=0.0) -> TweenerGroup:
 	
@@ -28,35 +30,38 @@ static func afterimage(tween: Tween, obj: CanvasItem, time_sec: float,
 		sprite, "scale", tex_scale * scale_ratio, time_sec).from(tex_scale))
 	tween.finished.connect(sprite.queue_free, CONNECT_ONE_SHOT)
 	if time_sec > fade_delay:
-		var fade_tweener: PropertyTweener = (tween.tween_property(
+		var fade_tweener: PropertyTweener = (tween.parallel().tween_property(
 			sprite, "modulate:a", 0.0, time_sec - fade_delay).from(1.0)
 			.set_delay(fade_delay))
-		return TweenerGroup.new([scale_tweener, fade_tweener])
-	return TweenerGroup.new([scale_tweener])
+		return TweenerGroup.new([scale_tweener, fade_tweener], sprite)
+	return TweenerGroup.new([scale_tweener], sprite)
 
 
 ## Tweens [param bus]' volume from approximate silence to [param final_volumedb]
 ## 	over [param time_sec] seconds
 static func bus_fade_in(tween: Tween, bus: int, final_volumedb: float,
-		time_sec: float) -> Tween:
+		time_sec: float) -> MethodTweener:
 	
 	assert(tween.is_valid(), "Tween is invalid")
-	var clb: Callable = func(volumepr: float):
-		AudioServer.set_bus_volume_db(bus, AudioHub.PERC2DB(volumepr))
-	tween.tween_method(clb, U.SILENCE_DB, final_volumedb, time_sec)
-	return tween
+	var clb: Callable = func(volumedb: float):
+		AudioServer.set_bus_volume_db(bus, volumedb)
+	var tweener: MethodTweener = tween.tween_method(
+		clb, U.SILENCE_DB, final_volumedb, time_sec)
+	tweener.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	return tweener
 
 
 ## Tweens [param bus]' volume from its current value to approximate silence
 ## 	over [param time_sec] seconds
-static func bus_fade_out(tween: Tween, bus: int, time_sec: float) -> Tween:
+static func bus_fade_out(tween: Tween, bus: int, time_sec: float) -> MethodTweener:
 	
 	assert(tween.is_valid(), "Tween is invalid")
-	var clb: Callable = func(volumepr: float):
-		AudioServer.set_bus_volume_db(bus, AudioHub.PERC2DB(volumepr))
-	tween.tween_method(clb, AudioServer.get_bus_volume_db(bus),
-		U.SILENCE_DB, time_sec)
-	return tween
+	var clb: Callable = func(volumedb: float):
+		AudioServer.set_bus_volume_db(bus, volumedb)
+	var tweener: MethodTweener = tween.tween_method(
+		clb, AudioServer.get_bus_volume_db(bus), U.SILENCE_DB, time_sec)
+	tweener.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	return tweener
 
 
 ## Starts an animation which switches value of [param property]
@@ -101,9 +106,9 @@ static func float_away(tween: Tween, obj: CanvasItem, time_sec:float=1.0,
 		var fade_tweener: PropertyTweener = (tween.parallel().tween_property(
 			obj, "modulate:a", 0.0, time_sec - fade_delay)
 			.set_delay(fade_delay))
-		return TweenerGroup.new([pos_tweener, fade_tweener]).set_trans(
+		return TweenerGroup.new([pos_tweener, fade_tweener], obj).set_trans(
 			Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	return TweenerGroup.new([pos_tweener]).set_trans(
+	return TweenerGroup.new([pos_tweener], obj).set_trans(
 			Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
@@ -165,10 +170,9 @@ static func shake_pos(tween: Tween, obj: CanvasItem, from: Vector2,
 		time_sec:float=1.0, to:Vector2=Vector2.ZERO) -> MethodTweener:
 	
 	assert(tween.is_valid(), "Tween is invalid")
-	var start_posg: Vector2 = obj.global_position
+	var start_posg: Vector2 = obj.position
 	var shake_func: Callable = (func(shake: Vector2):
-		obj.set("global_position",
-			start_posg - shake + R.random_vect(2*shake)))
+		obj.set("position", start_posg - shake + R.random_vect(2*shake)))
 	var shake_tweener: MethodTweener = (tween.tween_method(
 		shake_func, from, to, time_sec))
 	return shake_tweener
@@ -182,9 +186,9 @@ static func shake_property(tween: Tween, obj: CanvasItem, property: String,
 		from: float, time_sec:float=1.0, to:float=0.0) -> MethodTweener:
 	
 	assert(tween.is_valid(), "Tween is invalid")
-	var start_val: float = obj.get(property)
+	var start_val: float = obj.get_indexed(property)
 	var shake_func: Callable = (func(shake: float):
-		obj.set(property, start_val - shake + R.randomf(2*shake)))
+		obj.set_indexed(property, start_val - shake + R.randomf(2*shake)))
 	var shake_tweener: MethodTweener = (tween.tween_method(
 		shake_func, from, to, time_sec))
 	return shake_tweener
@@ -202,16 +206,21 @@ static func shrink_towards(tween: Tween, obj: CanvasItem, final_posg: Vector2,
 	var size_tweener: PropertyTweener = (tween.parallel().tween_property(
 		obj, "global_size", final_size, time_sec))
 	tween.finished.connect(obj.queue_free)
-	return TweenerGroup.new([pos_tweener, size_tweener])
+	return TweenerGroup.new([pos_tweener, size_tweener], obj)
 
 
 ## Data class applying tweener methods to all tweeners
 class TweenerGroup:
 	
+	var object: Object
 	var tweeners: Array = []
 	
-	func _init(_tweeners: Array) -> void:
+	func _init(_tweeners: Array, _object: Object) -> void:
 		self.tweeners  = _tweeners
+		self.object = _object
+	
+	func get_object() -> Object:
+		return object
 	
 	func set_ease(ease_val: Tween.EaseType) -> TweenerGroup:
 		for tw in tweeners:

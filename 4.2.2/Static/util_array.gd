@@ -7,13 +7,14 @@ const IDENTITY_FUNC = Callable(UArr, "_identity")
 
 
 # @PRIVATE
-static func _identity(x) -> Variant:
+static func _identity(x: Variant) -> Variant:
 	return x
 
 
 ## Returns true if [param clb] returns true for all members of [param arr]
 static func all(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
 	
+	assert(clb.is_valid(), "Callable is invalid")
 	for x:Variant in arr:
 		if clb.call(x):
 			return false
@@ -23,6 +24,7 @@ static func all(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
 ## Returns true if [param clb] returns true for any member of [param arr]
 static func any(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
 	
+	assert(clb.is_valid(), "Callable is invalid")
 	for x:Variant in arr:
 		if clb.call(x):
 			return true
@@ -78,6 +80,7 @@ static func exclude(a: Array, b: Array) -> Array:
 ## Returns all members of [param arr] for which [param clb] returns true
 static func filter(arr: Array, clb:Callable=IDENTITY_FUNC) -> Array:
 	
+	assert(clb.is_valid(), "Callable is invalid")
 	var filtered_arr: Array = []
 	for x:Variant in arr:
 		if clb.call(x):
@@ -103,6 +106,7 @@ static func erase_all(arr: Array, value: Variant) -> Array:
 ## Returns first member of [param arr] for which [param clb] returns true
 static func first(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 	
+	assert(clb.is_valid(), "Callable is invalid")
 	for i in range(arr.size()):
 		var return_val: Variant = clb.call(arr[i])
 		if return_val:
@@ -155,6 +159,7 @@ static func is_subset_of(a: Array, b: Array) -> bool:
 ## Returns last member of [param arr] for which [param clb] returns true
 static func last(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 	
+	assert(clb.is_valid(), "Callable is invalid")
 	for i in range(arr.size() - 1, -1, -1):
 		var return_val: Variant = clb.call(arr[i])
 		if return_val:
@@ -166,6 +171,7 @@ static func last(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 ## [br]@PRE [param arr] is not empty
 static func max_val(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 	
+	assert(clb.is_valid(), "Callable is invalid")
 	var _max_val: Variant = clb.call(arr[0])
 	var id: int = 0
 	for i in range(1, arr.size()):
@@ -180,6 +186,7 @@ static func max_val(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 ## [br]@PRE [param arr] is not empty
 static func min_val(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 	
+	assert(clb.is_valid(), "Callable is invalid")
 	var _min_val: Variant = clb.call(arr[0])
 	var id: int = 0
 	for i in range(1, arr.size()):
@@ -193,6 +200,7 @@ static func min_val(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 ## Returns true if [param clb] returns true for no member of [param arr]
 static func none(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
 	
+	assert(clb.is_valid(), "Callable is invalid")
 	for x:Variant in arr:
 		if clb.call(x):
 			return false
@@ -203,6 +211,7 @@ static func none(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
 ## 	returns a.call(b).call(c).call(...)
 static func reduce(arr: Array, clb:Callable) -> Variant:
 	
+	assert(clb.is_valid(), "Callable is invalid")
 	var res: Variant = arr[0]
 	for i in range(1, arr.size()):
 		res = clb.call(res, [[arr[i]]])

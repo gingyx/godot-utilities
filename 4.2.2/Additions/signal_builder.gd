@@ -2,7 +2,7 @@
 class_name SigBuilder
 
 
-const SIG_CONTROL_GROUP = "signal_builder:signal_controls"
+const SIG_CONTROL_GROUP = "signal_builder__signal_controls"
 
 ## Signal object
 var signal_obj: Signal
@@ -328,9 +328,8 @@ class SigControl extends Node:
 		var _args: Array = []
 		if control_flags & FLAG_IGNORE_ARGS != FLAG_IGNORE_ARGS:
 			for arg:Variant in args:
-				if typeof(arg) == typeof(NO_ARG):
-					if arg == NO_ARG:
-						continue
+				if is_same(arg, NO_ARG):
+					continue
 				_args.append(arg)
 		for op:Array in arg_operations:
 			match op[0]:

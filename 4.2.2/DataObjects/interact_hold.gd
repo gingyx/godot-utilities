@@ -35,6 +35,8 @@ func cast_hold(start_new:bool=false) -> void:
 	
 	if not enabled:
 		return
+	if not is_holding:
+		return
 	hold_casted.emit()
 	if is_holding && start_new:
 		is_holding = false # allow update
