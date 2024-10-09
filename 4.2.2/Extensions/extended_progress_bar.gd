@@ -1,54 +1,50 @@
-## Extension of ProgressBar class with utilities
+## Extension of the ProgressBar class with utilities.
+##
+## Provides custom label formatting that extends the built-in [member show_percentage]
+## 	and the option to use an external label from the scene tree.
+## Provides dynamic colors that change based on [member value].
+## Provides syntax sugar for common operations like [method is_empty] and [method is_full].
 extends ProgressBar
 class_name ExtProgressBar
 
 
+## How to display [member value]
 enum LabelType {
-	NONE,
-	VALUE,
-	RATIO,
-	PERCENTAGE,
-	FRACTION
+	NONE, ## No label.
+	VALUE, ## Label shows current value.
+	VALUE_OUT_OF_MAX, ## Label shows value / max_value.
+	PERCENTAGE, ## Label shows value as percentage with %-symbol.
+	PERCENTAGE_NUMBER, ## Label shows value as percentage without %-symbol.
 }
 
-
-## Colors from this sequence are applied based on [member value]
-## 	from low value -> high value
-@export var gradient: PackedColorArray
 ## How to display [member value]
 @export var label_type: LabelType
 ## Position offset for the label that displays [member value]
 @export var label_offset: Vector2
-## Label that displays values
-@export var value_label: Label
+## Label that displays values.
+## If no value passed, this bar will create its own new label
+@export var value_label: Label:
+	set = set_value_label
 
-# cache value, array size of gradient
-var gradient_size: int
-
-## Foreground bar style
-@onready var Fg: StyleBoxFlat
+## Visibility of [member value_label]
+var text_visible: bool:
+	get: return value_label.visible if is_instance_valid(value_label) else false
+	set(x): set_text_visible(x)
 
 
 # @PRIVATE
 func _ready() -> void:
 	
-	if gradient:
-		Fg = get("theme_override_styles/fg")
-		assert(Fg is StyleBoxFlat)
-		gradient_size = gradient.size()
+	value_label = value_label
 	if value_label == null && label_type != LabelType.NONE:
-		_setup_internal_label()
-	_on_value_changed(value)
-	if gradient || label_type != LabelType.NONE:
-		if not value_changed.is_connected(_on_value_changed):
-			value_changed.connect(_on_value_changed)
+		_create_internal_label()
 
 
 # @PRIVATE
-func _setup_internal_label() -> void:
+func _create_internal_label() -> void:
 	
 	value_label = Label.new()
-	value_label.name = "value_label"
+	value_label.name = "ValueLabel"
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	value_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
@@ -62,75 +58,77 @@ func _setup_internal_label() -> void:
 
 
 # @PRIVATE
-func _on_value_changed(_value: float) -> void:
+func _update_value_label() -> void:
 	
-	if gradient:
-		var i = int(ratio * gradient_size)
-		if i == 0:
-			Fg.bg_color = gradient[0]
-		else:
-			Fg.bg_color = gradient[i - 1]
-	if value_label != null:
-		update_label()
+	if max_value <= 0:
+		return
+	match label_type:
+		LabelType.VALUE:
+			value_label.text = str(value)
+		LabelType.VALUE_OUT_OF_MAX:
+			value_label.text = "{} / {}".format([value, max_value], "{}")
+		LabelType.PERCENTAGE:
+			value_label.text = "{} %".format([int(ratio * 100)], "{}")
+		LabelType.PERCENTAGE_NUMBER:
+			value_label.text = "{}".format([int(ratio * 100)], "{}")
 
 
 ## Copies [member GameStat.value], [member GameStat.min_value] and
-## 	[member GameStat.max_value] from [param game_stat]
+## 	[member GameStat.max_value] from [param game_stat].
 func copy_game_stat(game_stat: GameStat) -> void:
 	
 	min_value = game_stat.min_value
 	max_value = game_stat.max_value
 	value = game_stat.val
+	_update_value_label() # TODO shouldnt be neccesary
 
 
-## Returns the ratio [code]val / max_value[/code]
+## Returns the ratio [code]val / max_value[/code].
 func get_progress(val: float) -> float:
 	return val / max_value
 
 
-## Returns the width (pixels) of the bar filling
+## Returns the width (pixels) of the bar filling.
 func get_progress_width(val:float=self.value) -> float:
 	return (val / max_value) * size.x
 
 
-## Returns [code]value <= 0[/code]
+## Returns [code]value <= 0[/code].
 func is_empty() -> bool:
 	return value <= 0
 
 
-## Returns [code]value >= max_value[/code]
+## Returns [code]value >= max_value[/code].
 func is_full() -> bool:
 	return value >= max_value
 
 
-## Sets [member max_val]
+## Sets [member max_value] and [member value] to [param max_val].
 func set_max_value(max_val: float) -> void:
 	
-	self.max_value = max_val
-	self.value = max_val
-	_on_value_changed(max_val)
+	max_value = max_val
+	value = max_val
 
 
-## Toggles the text in front of the bar
-## [br]@PRE [member show_value] must have been true when this bar entered the tree
-func toggle_label(text_visible: bool) -> void:
+## Shows or hides [member value_label].
+func set_text_visible(p_text_visible: bool) -> void:
 	
-	self.show_value = text_visible
-	if value_label != null:
-		update_label()
+	value_label.visible = p_text_visible
+	if is_instance_valid(value_label):
+		_update_value_label()
 
 
-# @PRIVATE
-func update_label() -> void:
+## Sets [member value_label].
+func set_value_label(p_value_label: Label) -> void:
 	
-	if max_value <= 0 || show_percentage:
-		return
-	match label_type:
-		LabelType.FRACTION:
-			value_label.text = "{} / {}".format([value, max_value], "{}")
-		LabelType.PERCENTAGE:
-			value_label.text = "{} %".format([int(ratio * 100)], "{}")
-		LabelType.RATIO:
-			value_label.text = "{}".format([int(ratio * 100)], "{}")
-		LabelType.VALUE:
-			value_label.text = str(value)
+	assert(is_instance_valid(p_value_label) || p_value_label == null,
+			"Value label is an invalid instance.")
+	value_label = p_value_label
+	if value_label:
+		show_percentage = false
+	var callable: Callable = _update_value_label.unbind(1)
+	if value_changed.is_connected(callable):
+		value_changed.disconnect(callable)
+	if p_value_label:
+		value_changed.connect(callable)
+		_update_value_label()

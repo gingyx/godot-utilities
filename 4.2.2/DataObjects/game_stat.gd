@@ -1,6 +1,7 @@
-## Data class for stats (e.g. health, coins, gems, ...)
-## [br]| Automatic clamping
-## [br]| Signals for player feedback
+## Data class for stats (e.g. health, coins, gems, ...).
+##
+## Provides [Range]-like behaviour with clamping.
+## Provides signals for player feedback.
 class_name GameStat
 extends Resource
 
@@ -37,18 +38,18 @@ func _init(value_bounds:Span2f=null, start_value:float=0.0) -> void:
 # @PRIVATE
 func _to_string() -> String:
 	
-	var _name: String = " '" + name + "' " if name else ""
+	var _name: String = name if name else "anon_stat"
 	var _min: String = str(min_value) if not is_inf(min_value) else ".."
 	var _max: String = str(max_value) if not is_inf(max_value) else ".."
-	return "Stat{}[{}, {}]: {}".format([_name, _min, _max, val], "{}")
+	return "{}{{}, {}}".format([_name, _min, _max], "{}")
 
 
-## Increases [member val] to [param max_val] if [param max_val] is larger
+## Increases [member val] to [param max_val] if [param max_val] is larger.
 func check_max(max_val: float) -> void:
 	val = max(val, max_val)
 
 
-## Decreases [member val] to [param min_val] if [param min_val] is smaller
+## Decreases [member val] to [param min_val] if [param min_val] is smaller.
 func check_min(min_val: float) -> void:
 	val = min(val, min_val)
 
@@ -56,7 +57,7 @@ func check_min(min_val: float) -> void:
 ## Returns whether increasing [member val] by [param amount]
 ## 	would exceed [member max_value].
 ## Commits decrease if that would not exceed [member max_value]
-## 	and [param check_only] is false
+## 	and [param check_only] is false.
 func deposit(amount: float, check_only:bool=false) -> bool:
 	
 	if val + amount > max_value:
@@ -71,7 +72,7 @@ func deposit(amount: float, check_only:bool=false) -> bool:
 ## Returns whether decreasing [member val] by [param amount]
 ## 	would exceed [member min_value].
 ## Commits decrease if that would not exceed [member min_value]
-## 	and [param check_only] is false
+## 	and [param check_only] is false.
 func withdraw(amount: float, check_only:bool=false) -> bool:
 	
 	if val - amount < min_value:
@@ -83,37 +84,38 @@ func withdraw(amount: float, check_only:bool=false) -> bool:
 		return true
 
 
-## Returns [code]val == min_value[/code]
+## Returns [code]val == min_value[/code].
 func is_empty() -> bool:
 	return val == min_value
 
 
-## Returns [code]val == max_value[/code]
+## Returns [code]val == max_value[/code].
 func is_full() -> bool:
 	return val == max_value
 
 
-## Sets [member val] to [member min_value]. Returns self
+## Sets [member val] to [member min_value]. Returns self.
 func make_empty() -> GameStat:
 	
 	val = min_value
 	return self
 
 
-## Sets [member val] to [member max_value]. Returns self
+## Sets [member val] to [member max_value]. Returns self.
 func make_full() -> GameStat:
 	
 	val = max_value
 	return self
 
 
-## Emits [signal value_changed] for correct initialization of e.g. UI
+## Emits [signal value_changed] for correct initialization of e.g. UI.
 func refresh() -> void:
 	
 	value_changed.emit(val, val)
 	value_changed_to.emit(val)
 
 
+## Sets value to [param new_value].
 func set_val(new_value: float) -> void:
 	
 	var old_value: float = val
@@ -122,9 +124,9 @@ func set_val(new_value: float) -> void:
 	value_changed_to.emit(val)
 
 
-## Sets the minimum and maximum values
+## Sets the minimum and maximum values.
 func set_value_bounds(value_bounds: Span2f) -> void:
 	
 	assert(value_bounds != null)
-	self.min_value = value_bounds.lower
-	self.max_value = value_bounds.upper
+	min_value = value_bounds.begin
+	max_value = value_bounds.end

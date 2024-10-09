@@ -1,38 +1,21 @@
-## Dictionary class used for picking randomized loot
+## Dictionary class used for picking randomized loot.
 extends Resource
-class_name ProbTable
+class_name ChanceTable
 
 
+## See [method pick_item_list]
 var base_item_list: Array
+## Reference table that matches keys to probability weights
 var table: Dictionary = {
 	# item_id = chance_weight
 }
 
 
-## @param _table: The reference table where key = prob_weight
-func _init(_table:Dictionary={}, _base_item_list:Array=[]) -> void:
+## Initializes [member table] and [member base_item_list].
+func _init(p_table:Dictionary={}, p_base_item_list:Array=[]) -> void:
 	
-	self.table = _table
-	self.base_item_list = _base_item_list
-
-
-## Constructs a new table, whose weights are based on the values in [param arr].
-## 	Returns self
-func _from_array(arr: Array) -> ProbTable:
-	
-	assert(table.is_empty(), "Table must be empty")
-	for i in range(arr.size()):
-		table[i] = arr[i]
-	return self
-
-
-## Constructs a new table whose keys are based on the values in [param arr]
-func _from_array_keys(arr: Array) -> ProbTable:
-	
-	assert(table.is_empty(), "Table must be empty")
-	for k:Variant in arr:
-		table[k] = 1
-	return self
+	self.table = p_table
+	self.base_item_list = p_base_item_list
 
 
 # @PRIVATE
@@ -42,7 +25,7 @@ func _to_string() -> String:
 
 ## Returns a string representation of [member table]
 ##  that replaces integer items with names as defined by [param item_by_name].
-## 	If [param normalize_weights], expresses weights as percentages
+## If [param normalize_weights], expresses weights as percentages.
 func get_summary(item_by_name: Dictionary, normalize_weights:bool=false) -> String:
 	
 	var pair_strings: Array = []
@@ -60,7 +43,7 @@ func get_summary(item_by_name: Dictionary, normalize_weights:bool=false) -> Stri
 
 
 ## Returns the total value of all keys in [param item_list]
-## 	as defined by this table
+## 	as defined by this table.
 func get_total_weight(item_list: Array) -> int:
 	
 	var total_weight: int = 0
@@ -69,9 +52,27 @@ func get_total_weight(item_list: Array) -> int:
 	return total_weight
 
 
+## Adds a new table pair (index:value) for every value in [param arr].
+## 	Returns self.
+func import_array(arr: Array) -> ChanceTable:
+	
+	for i in range(arr.size()):
+		table[i] = arr[i]
+	return self
+
+
+## Adds a new table pair (value:1) for every value in [param arr].
+## 	Returns self.
+func import_array_as_keys(arr: Array) -> ChanceTable:
+	
+	for key:Variant in arr:
+		table[key] = 1
+	return self
+
+
 ## Inverts the picking probability of each key, rounded to ensure integer values.
-## Returns self
-func invert_weights() -> ProbTable:
+## Returns self.
+func invert_weights() -> ChanceTable:
 	
 	var max_weight: Variant = table.values().max()
 	for key:Variant in table:
@@ -79,7 +80,7 @@ func invert_weights() -> ProbTable:
 	return self
 
 
-## Returns whether this ProbTable is valid
+## Returns whether this ChanceTable is valid.
 func is_valid() -> bool:
 	
 	for weight:Variant in table.values():
@@ -90,7 +91,7 @@ func is_valid() -> bool:
 	return true
 
 
-## Returns a random key from [member table], with respect to its given weigths
+## Returns a random key from [member table], with respect to its given weigths.
 func pick_item() -> Variant:
 	
 	assert(not table.is_empty(), "Cannot pick value from empty table")
@@ -98,7 +99,7 @@ func pick_item() -> Variant:
 
 
 ## Same as [method pick_item], but excludes any keys in [param except].
-## 	Modifies [member table] in-place
+## 	Modifies [member table] in-place.
 func pick_item_except(except: Array) -> Variant:
 	
 	## alter values based on except
@@ -107,16 +108,16 @@ func pick_item_except(except: Array) -> Variant:
 		old_values[item] = table[item]
 		table[item] = 0
 	## ensure table is still valid after altering
-	var return_val:Variant = pick_item() if is_valid() else null
+	var return_val: Variant = (pick_item() if is_valid() else null)
 	## restore old values
 	for item:Variant in except:
 		table[item] = old_values[item]
 	return return_val
 
 
-## Returns an array of [param list_size] with
-## [br]| all items from [member base_item_list] that fit
-## [br]| filled up with random items from [member table]
+## Returns an array of [param list_size] with:
+## [br]| all items from [member base_item_list] that fit.
+## [br]| filled up with random items from [member table].
 func pick_item_list(list_size: int) -> Array:
 	
 	var list: Array = base_item_list.slice(0, list_size - 1)
@@ -125,15 +126,15 @@ func pick_item_list(list_size: int) -> Array:
 	return list
 
 
-## Sets a new base item list. See [method pick_item_list]
-func set_base_item_list(new_base_list: Array) -> ProbTable:
+## Sets a new base item list. See [method pick_item_list].
+func set_base_item_list(new_base_list: Array) -> ChanceTable:
 	
 	self.base_item_list = new_base_list
 	return self
 
 
-## Sets a new [member table]
-func set_table(new_table: Dictionary) -> ProbTable:
+## Sets a new [member table].
+func set_table(new_table: Dictionary) -> ChanceTable:
 	
 	assert(not new_table.is_empty(), "New table cannot be empty")
 	self.table = new_table
@@ -144,16 +145,16 @@ func set_table(new_table: Dictionary) -> ProbTable:
 
 
 ## Returns an array where each key of [member table] appears x times,
-## 	where x equals the key's weight
+## 	where x equals the key's weight.
 func to_array() -> Array:
 	
 	var arr: Array = []
 	for key:Variant in table:
-		for _i in range(table[key]):
+		for _i:int in range(table[key]):
 			arr.append(key)
 	return arr
 
 
-## Updates a key from table with a new chance weight [param new_value]
+## Updates a key from table with a new chance weight [param new_value].
 func update_value(key: Variant, new_value: Variant) -> void:
 	table[key] = new_value

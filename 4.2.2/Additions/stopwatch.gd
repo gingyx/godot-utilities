@@ -1,9 +1,9 @@
-## Timer-like class that
-## [br]| can run indefinitely
-## [br]| can emit granular timeout signals based on [member lap_times]
-@icon("../Icons/StopWatch.svg")
+## Timer-like class that can run indefinitely and have multiple timeouts.
+##
+## Provides granular timeout signals according to [member lap_times].
+@icon("../Icons/Stopwatch.svg")
 extends Node
-class_name StopWatch
+class_name Stopwatch
 
 
 ## Emitted every time_sec a lap time_sec has been passed from [member lap_times]
@@ -19,7 +19,7 @@ var lap_count: int
 ## Current time_sec (s)
 var time_sec: float
 
-# @PRIVATE cache
+# @PRIVATE Cache value
 var _has_lap_times: bool
 
 
@@ -42,7 +42,7 @@ func _process(delta: float) -> void:
 				return
 
 
-## Manually emits [signal lap] and resets time_sec if [param reset]
+## Manually emits [signal lap] and resets time_sec if [param reset].
 func complete_lap(reset:bool=true) -> void:
 	
 	if reset:
@@ -50,18 +50,18 @@ func complete_lap(reset:bool=true) -> void:
 	lap.emit(time_sec)
 
 
-## Returns the time_sec to the last lap
+## Returns the time_sec to the last lap.
 func get_total_lap_time() -> float:
 	return lap_times[-1]
 
 
-## Returns whether currently tracking time_sec
+## Returns whether currently tracking time_sec.
 func is_running() -> bool:
 	return is_processing()
 
 
-## Triggers [signal lap] every time this stop watch
-## 	passes one of [param lap_wait_times]
+## Triggers [signal lap] every time this stopwatch
+## 	passes one of [param lap_wait_times].
 func set_lap_times(lap_wait_times: PackedFloat32Array) -> void:
 	
 	if lap_wait_times.is_empty():
@@ -72,7 +72,7 @@ func set_lap_times(lap_wait_times: PackedFloat32Array) -> void:
 	_has_lap_times = true
 
 
-## Starts running the stop watch
+## Starts running the stopwatch.
 func start() -> void:
 	
 	if _has_lap_times:
@@ -82,12 +82,12 @@ func start() -> void:
 	set_process(true)
 
 
-## Stops running the stop watch
+## Stops running the stopwatch.
 func stop() -> void:
 	set_process(false)
 
 
-## Data class for tracking elapsed time_sec
+## Data class for tracking elapsed time_sec.
 class Timestamp:
 	
 	var start_str: String

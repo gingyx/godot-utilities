@@ -1,12 +1,18 @@
-## Timer class to be used instead of SceneTreeTimer to avoid error logs
+## Timer extension that runs once and calls a function on timeout.
+##
+## Can be used instead of SceneTreeTimer to avoid error logs.
 extends Timer
 class_name Delay
+
+
+# @PRIVATE
+const _NODE_GROUP_ONGOING_DELAYS = "delay_ongoing_delays"
 
 
 ## Returns a new delay object that becomes a child of [param parent],
 ## 	automatically starts running and
 ## 	times out after [param time_sec] seconds.
-## [br]If [param process_always], the delay is not affected by scene tree pausing
+## [br]If [param process_always], the delay is not affected by scene tree pausing.
 func _init(parent: Node, time_sec: float, process_always:bool=false) -> void:
 	
 	if not is_instance_valid(parent):
@@ -17,9 +23,9 @@ func _init(parent: Node, time_sec: float, process_always:bool=false) -> void:
 		wait_time = time_sec
 	else:
 		tree_entered.connect(emit_signal.bind("timeout"))
-	process_mode = (Node.PROCESS_MODE_ALWAYS if process_always
-		else Node.PROCESS_MODE_INHERIT)
-	add_to_group("ongoing_delays")
+	process_mode = 	(Node.PROCESS_MODE_ALWAYS if process_always
+				else Node.PROCESS_MODE_INHERIT)
+	add_to_group(_NODE_GROUP_ONGOING_DELAYS)
 	parent.add_child(self)
 	timeout.connect(queue_free, CONNECT_DEFERRED)
 
@@ -29,16 +35,16 @@ func _ready() -> void:
 	start()
 
 
-## Calls [param callable] on timer timeout
+## Calls [param callable] on timer timeout.
 func callback(callable: Callable, flags:int=0) -> void:
 	timeout.connect(callable, flags)
 
 
 ## Calls [param callable] on timer timeout
-## 	and stops ongoing delays that have the same callback
+## 	and stops ongoing delays that have the same callback.
 func callback_unique(callable: Callable, flags:int=0) -> void:
 	
-	for del:Delay in get_tree().get_nodes_in_group("ongoing_delays"):
+	for del:Delay in get_tree().get_nodes_in_group(_NODE_GROUP_ONGOING_DELAYS):
 		if del.timeout.is_connected(callable):
 			del.queue_free()
 	callback(callable, flags)

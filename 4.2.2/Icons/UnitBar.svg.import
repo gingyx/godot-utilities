@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bmsxyoekouiqh"
-path="res://.godot/imported/HubClass.svg-9e3e6013b723862fd6db260f3380b357.ctex"
+uid="uid://clg5tdosgwhi7"
+path="res://.godot/imported/UnitBar.svg-fa961781b794bebf9caa23d3ae1b6b62.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Src/Util/Icons/HubClass.svg"
-dest_files=["res://.godot/imported/HubClass.svg-9e3e6013b723862fd6db260f3380b357.ctex"]
+source_file="res://Src/Util/Icons/UnitBar.svg"
+dest_files=["res://.godot/imported/UnitBar.svg-fa961781b794bebf9caa23d3ae1b6b62.ctex"]
 
 [params]
 

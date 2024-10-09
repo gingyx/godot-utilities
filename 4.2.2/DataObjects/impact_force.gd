@@ -1,4 +1,4 @@
-## Data class representing an attack
+## Data class representing an attack.
 class_name ImpactForce
 
 
@@ -16,19 +16,18 @@ var effects: PackedStringArray
 
 
 ## Initializes [member power], [member damage] and [member direction]
-func _init(_power: float, _damage:int=0, _direction:Vector2=Vector2.ZERO) -> void:
+func _init(p_power: float, p_damage:int=0, p_direction:Vector2=Vector2.ZERO) -> void:
 	
-	assert(_damage >= 0, "Damage must be positive")
-	self.power = _power
-	self.damage = _damage
-	self.direction = _direction
+	assert(p_damage >= 0, "Damage must be positive")
+	self.power = p_power
+	self.damage = p_damage
+	self.direction = p_direction
 
 
 # @PRIVATE
 func _to_string() -> String:
-	
 	return "Force: pow={}, dmg={}, dir={}".format(
-		[power, damage, direction], "{}")
+			[power, damage, direction], "{}")
 
 
 ## Adds a string of meta-data [param effect] to this force,

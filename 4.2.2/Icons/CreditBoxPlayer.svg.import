@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cepsner1uurhp"
-path="res://.godot/imported/Weapon.svg-ccd40c68c904412416fe541a0a51de17.ctex"
+uid="uid://djvmdltgnu8xn"
+path="res://.godot/imported/CreditBoxPlayer.svg-69b413df6ed2ac8565d129569428cb9f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Src/Util/Icons/Weapon.svg"
-dest_files=["res://.godot/imported/Weapon.svg-ccd40c68c904412416fe541a0a51de17.ctex"]
+source_file="res://Src/Util/Icons/CreditBoxPlayer.svg"
+dest_files=["res://.godot/imported/CreditBoxPlayer.svg-69b413df6ed2ac8565d129569428cb9f.ctex"]
 
 [params]
 

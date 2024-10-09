@@ -1,18 +1,23 @@
-## Static utility class for array operations
+## Static utility class for array operations.
+##
+## Many methods provide a Callable parameter to transform array arguments
+## 	before using them in their calculation.
+## These methods returns a ArrEntry object that holds information on both the
+## 	original arguments and their transformed versions.
 class_name UArr
 
 
+# @PRIVATE Reference to [method _identity]
+const IDENTITY_FN = Callable(UArr, "_identity")
 
-const IDENTITY_FUNC = Callable(UArr, "_identity")
 
-
-# @PRIVATE
+# @PRIVATE Returns [param x]. Used as default argument placeholder.
 static func _identity(x: Variant) -> Variant:
 	return x
 
 
-## Returns true if [param clb] returns true for all members of [param arr]
-static func all(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
+## Returns true if [param clb] returns true for all members of [param arr].
+static func all(arr: Array, clb:Callable=IDENTITY_FN) -> bool:
 	
 	assert(clb.is_valid(), "Callable is invalid")
 	for x:Variant in arr:
@@ -21,8 +26,8 @@ static func all(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
 	return true
 
 
-## Returns true if [param clb] returns true for any member of [param arr]
-static func any(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
+## Returns true if [param clb] returns true for any member of [param arr].
+static func any(arr: Array, clb:Callable=IDENTITY_FN) -> bool:
 	
 	assert(clb.is_valid(), "Callable is invalid")
 	for x:Variant in arr:
@@ -31,7 +36,7 @@ static func any(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
 	return false
 
 
-## Returns the average of all values in [param arr]
+## Returns the average of all values in [param arr].
 static func average(arr: Array) -> Variant:
 	
 	if arr.is_empty():
@@ -39,24 +44,24 @@ static func average(arr: Array) -> Variant:
 	return sum(arr) / arr.size()
 
 
-## Returns how many values appear in both [param a] and [param b]
+## Returns how many values appear in both [param a] and [param b].
 static func count_equal(a: Array, b: Array, in_order:bool=true) -> int:
 	
 	if in_order:
 		var count: int = 0
-		for i in range(min(a.size(), b.size())):
+		for i:int in range(mini(a.size(), b.size())):
 			if a[i] == b[i]:
 				count += 1
 		return count
 	return intersect(a, b).size()
 
 
-## Returns how many values do not appear in both [param a] and [param b]
+## Returns how many values do not appear in both [param a] and [param b].
 static func count_unequal(a: Array, b: Array, in_order:bool=true) -> int:
 	
 	if in_order:
 		var count: int = abs(a.size() - b.size())
-		for i in range(min(a.size(), b.size())):
+		for i:int in range(mini(a.size(), b.size())):
 			if a[i] != b[i]:
 				count += 1
 		return count
@@ -65,7 +70,7 @@ static func count_unequal(a: Array, b: Array, in_order:bool=true) -> int:
 	return exclude(b, a).size()
 
 
-## Returns set operation a / b
+## Returns result of set operation a / b.
 static func exclude(a: Array, b: Array) -> Array:
 	
 	var filtered_a: Array = []
@@ -77,8 +82,8 @@ static func exclude(a: Array, b: Array) -> Array:
 	return filtered_a
 
 
-## Returns all members of [param arr] for which [param clb] returns true
-static func filter(arr: Array, clb:Callable=IDENTITY_FUNC) -> Array:
+## Returns all members of [param arr] for which [param clb] returns true.
+static func filter(arr: Array, clb:Callable=IDENTITY_FN) -> Array:
 	
 	assert(clb.is_valid(), "Callable is invalid")
 	var filtered_arr: Array = []
@@ -88,23 +93,21 @@ static func filter(arr: Array, clb:Callable=IDENTITY_FUNC) -> Array:
 	return filtered_arr
 
 
-## Erases all occurences of [param value] in [param arr]
+## Erases all occurences of [param value] in [param arr].
 static func erase_all(arr: Array, value: Variant) -> Array:
 	
-	var value_type: int = typeof(value)
 	var ignore_count: int = 0
 	for i in range(arr.size()):
-		if typeof(arr[i]) == value_type:
-			if arr[i] == value:
-				continue
+		if is_same(arr[i], value):
+			continue
 		arr[ignore_count] = arr[i]
 		ignore_count += 1
 	arr.resize(ignore_count)
 	return arr
 
 
-## Returns first member of [param arr] for which [param clb] returns true
-static func first(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
+## Returns first member of [param arr] for which [param clb] returns true.
+static func first(arr: Array, clb:Callable=IDENTITY_FN) -> ArrEntry:
 	
 	assert(clb.is_valid(), "Callable is invalid")
 	for i in range(arr.size()):
@@ -114,7 +117,7 @@ static func first(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 	return ArrEntry.new(-1, null, arr)
 
 
-## Returns a dict of all distinct values in [param arr] and their appearance count
+## Returns a dict of all distinct values in [param arr] and their appearance count.
 static func frequency(arr: Array) -> Dictionary:
 	
 	var dict: Dictionary = {}
@@ -123,7 +126,7 @@ static func frequency(arr: Array) -> Dictionary:
 	return dict
 
 
-## Returns the intersection of [param a] and [param b]
+## Returns the intersection of [param a] and [param b].
 static func intersect(a: Array, b: Array) -> Array:
 	
 	var ix: Array = []
@@ -136,7 +139,8 @@ static func intersect(a: Array, b: Array) -> Array:
 	return ix
 
 
-## Returns whether [param arr] only contains unique values
+## Returns whether [param arr] only contains unique values - 
+## 	in order words, no duplicates.
 static func is_set(arr: Array) -> bool:
 	
 	var test_list: Array = []
@@ -147,7 +151,7 @@ static func is_set(arr: Array) -> bool:
 	return true
 
 
-## Returns whether [param a] is a subset of [param b]
+## Returns whether [param a] is a subset of [param b].
 static func is_subset_of(a: Array, b: Array) -> bool:
 	
 	for x:Variant in a:
@@ -157,7 +161,7 @@ static func is_subset_of(a: Array, b: Array) -> bool:
 
 
 ## Returns last member of [param arr] for which [param clb] returns true
-static func last(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
+static func last(arr: Array, clb:Callable=IDENTITY_FN) -> ArrEntry:
 	
 	assert(clb.is_valid(), "Callable is invalid")
 	for i in range(arr.size() - 1, -1, -1):
@@ -168,8 +172,8 @@ static func last(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 
 
 ## Returns the highest given value from Callable among members of [param arr].
-## [br]@PRE [param arr] is not empty
-static func max_val(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
+## [br]@PRE [param arr] is not empty.
+static func max_val(arr: Array, clb:Callable=IDENTITY_FN) -> ArrEntry:
 	
 	assert(clb.is_valid(), "Callable is invalid")
 	var _max_val: Variant = clb.call(arr[0])
@@ -183,8 +187,8 @@ static func max_val(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 
 
 ## Returns the lowest given value from Callable among members of [param arr].
-## [br]@PRE [param arr] is not empty
-static func min_val(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
+## [br]@PRE [param arr] is not empty.
+static func min_val(arr: Array, clb:Callable=IDENTITY_FN) -> ArrEntry:
 	
 	assert(clb.is_valid(), "Callable is invalid")
 	var _min_val: Variant = clb.call(arr[0])
@@ -197,8 +201,8 @@ static func min_val(arr: Array, clb:Callable=IDENTITY_FUNC) -> ArrEntry:
 	return ArrEntry.new(id, _min_val, arr)
 
 
-## Returns true if [param clb] returns true for no member of [param arr]
-static func none(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
+## Returns true if [param clb] returns true for no member of [param arr].
+static func none(arr: Array, clb:Callable=IDENTITY_FN) -> bool:
 	
 	assert(clb.is_valid(), "Callable is invalid")
 	for x:Variant in arr:
@@ -208,7 +212,7 @@ static func none(arr: Array, clb:Callable=IDENTITY_FUNC) -> bool:
 
 
 ## Given [param arr]=[a, b, c, ...],
-## 	returns a.call(b).call(c).call(...)
+## 	returns a.call(b).call(c).call(...).
 static func reduce(arr: Array, clb:Callable) -> Variant:
 	
 	assert(clb.is_valid(), "Callable is invalid")
@@ -218,7 +222,7 @@ static func reduce(arr: Array, clb:Callable) -> Variant:
 	return res
 
 
-## Returns a copy of [param arr] containing all its elements in reversed order
+## Returns a copy of [param arr] containing all its elements in reversed order.
 static func reversed(arr: Array) -> Array:
 	
 	var arr_reversed: Array = Array(arr) # prevent altering [param arr]
@@ -227,12 +231,12 @@ static func reversed(arr: Array) -> Array:
 
 
 ## Returns a copy of [param arr] that is extended to [param size]
-## 	with [param padding]. Returns an array of size [code]max(arr, size)[/code]
+## 	with [param padding]. Returns an array of size [code]max(arr, size)[/code].
 static func padded(arr: Array, size: int, padding: Variant) -> Array:
-	return arr.duplicate() + repeat([padding], max(0, size - arr.size()))
+	return arr.duplicate() + repeat([padding], maxi(0, size - arr.size()))
 
 
-## Returns the product of all elements from [param arr]
+## Returns the product of all elements from [param arr].
 static func product(arr: Array) -> Variant:
 	
 	if arr.is_empty():
@@ -244,17 +248,17 @@ static func product(arr: Array) -> Variant:
 
 
 ## Returns an array containing the elements of [param arr],
-##	duplicated [param n] times 
+##	duplicated [param n] times .
 static func repeat(arr: Array, n: int) -> Array:
 	
-	assert(not arr.is_empty())
+	assert(not arr.is_empty(), "Array cannot be empty")
 	var arr_repeated: Array = []
 	for _i in range(n):
 		arr_repeated += arr.duplicate(true)
 	return arr_repeated
 
 
-## Returns a shuffled copy of [param arr]
+## Returns a shuffled copy of [param arr].
 static func shuffled(arr: Array) -> Array:
 	
 	var arr_shuffled: Array = arr.duplicate()
@@ -262,7 +266,7 @@ static func shuffled(arr: Array) -> Array:
 	return arr_shuffled
 
 
-## Returns a sorted copy of [param arr]
+## Returns a sorted copy of [param arr].
 static func sorted(arr: Array) -> Array:
 	
 	var arr_sorted: Array = arr.duplicate()
@@ -270,16 +274,16 @@ static func sorted(arr: Array) -> Array:
 	return arr_sorted
 
 
-## Returns an array containing all characters in [param s] in order
+## Returns an array containing all characters in [param s] in order.
 static func str2arr(s: String) -> Array:
 	
 	var arr: Array = []
-	for ch:String in s:
-		arr.append(ch)
+	for chr:String in s:
+		arr.append(chr)
 	return arr
 
 
-## Returns the sum of all elements from [param arr]
+## Returns the sum of all elements from [param arr].
 static func sum(arr: Array) -> Variant:
 	
 	if arr.is_empty():
@@ -290,7 +294,19 @@ static func sum(arr: Array) -> Variant:
 	return _sum
 
 
-## Returns copy of [param arr] without any duplicates
+## Returns a dictionary with pairs of [code]{i: arr[i]}[/code]
+## 	for [code]i in range(len(arr))[/code].
+## If [param str_keys], converts all keys to String.
+static func to_dict(arr: Array, str_keys:bool=false) -> Dictionary:
+	
+	var dict: Dictionary = {}
+	for i in range(arr.size()):
+		@warning_ignore("incompatible_ternary")
+		dict[str(i) if str_keys else i] = arr[i]
+	return dict
+
+
+## Returns copy of [param arr] without any duplicates.
 static func to_set(arr: Array) -> Array:
 	
 	var set_arr: Array = []
@@ -300,12 +316,12 @@ static func to_set(arr: Array) -> Array:
 	return set_arr
 
 
-## Returns the set union [param a] and [param b]
+## Returns the set union [param a] and [param b].
 static func union_set(a: Array, b: Array) -> Array:
 	return to_set(a + b)
 
 
-## Returns a new array that joins together all embedded arrays in [param]
+## Returns a new array that joins together all embedded arrays in [param].
 static func unpack_2d(arr: Array) -> Array:
 	
 	var unpacked: Array = []
@@ -319,17 +335,19 @@ static func unpack_2d(arr: Array) -> Array:
 
 
 ## Data class representing an array entry with index and member
-## 	optional result [member call_value] of lambda array functions
+## 	optional result [member call_value] of lambda array functions.
 class ArrEntry:
 	
 	var array: Array
-	var index: int ## index of found value in the array
+	var index: int ## index of found value in the array; -1 if not found
 	var call_value: Variant ## result of lambda array function (optional)
 	
-	func _init(_index: int, _call_value: Variant, _array:Array=[]) -> void:	
-		self.call_value = _call_value
-		self.index = _index
-		self.array = _array
+	func _init(p_index: int, p_call_value: Variant, p_array:Array=[]) -> void:
+		self.call_value = p_call_value
+		self.index = p_index
+		self.array = p_array
 	
 	func member() -> Variant:
+		if index < 0 || index >= array.size():
+			return null
 		return array[index]

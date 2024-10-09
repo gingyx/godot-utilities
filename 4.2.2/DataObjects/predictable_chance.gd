@@ -1,4 +1,6 @@
-## Class for generating probability booleans with predictable rules
+## Class that generates probability booleans with predictable rules.
+##
+## Provides an alternative to pure randomness, which can improve user experience.
 extends Resource
 class_name PredictableChance
 
@@ -7,29 +9,41 @@ class_name PredictableChance
 @export var probability: float
 ## When generating this many chances chances,
 ## 	ensure at least one chance is true
-@export var at_least_every: int
+@export var at_least_every: int:
+	set = set_at_least_every
 ## Allow subsequent true chances
 @export var allow_subsequent: bool = true
 
-var aging: CycleIter
-var previous_chance: bool
+# @PRIVATE
+var _aging: CycleIter
+var _last_chance_value: bool
 
 
+# @PRIVATE
 func _init() -> void:
-	
-	if at_least_every > 0:
-		aging = CycleIter.new(at_least_every)
+	## Call setter
+	at_least_every = at_least_every
 
 
-## Returns true with a probability of [param prob], unless overruled
+## Returns true with a probability of [param prob], unless overruled.
 func chance() -> bool:
 	
 	var _chance: bool
-	if previous_chance && not allow_subsequent:
+	if _last_chance_value && not allow_subsequent:
 		_chance = false
-	elif aging != null && aging.increment():
+	elif _aging != null && _aging.increment():
 		_chance = true
 	else:
 		_chance = R.chance(probability)
-	previous_chance = _chance
+	_last_chance_value = _chance
 	return _chance
+
+
+## Sets [member at_least_every]
+func set_at_least_every(p_at_least_every: int):
+	
+	at_least_every = p_at_least_every
+	if at_least_every > 0:
+		_aging = CycleIter.new(at_least_every)
+	else:
+		_aging = null
