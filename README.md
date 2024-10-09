@@ -1,5 +1,5 @@
-# godot-utilities
-A library of Godot utility scripts that simplify common game code patterns.
+# Godot Utilities
+Library of general utility scripts for Godot Engine. Provides easy methods for common game code problems, with documentation.
 
 Scripts are seperated into four folders, according to the following categories.
 
